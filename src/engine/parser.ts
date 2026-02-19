@@ -12,7 +12,7 @@ export function parseGrammar(input: string): { grammar: Grammar | null; errors: 
     const line = lines[i].trim();
     if (!line || line.startsWith('//')) continue;
 
-    const arrowMatch = line.match(/^(\S+)\s*->\s*(.+)$/);
+    const arrowMatch = line.match(/^(\S+)\s*(?:->|→)\s*(.+)$/);
     if (!arrowMatch) {
       errors.push({ line: i + 1, column: 1, message: `Invalid production format. Expected: NonTerminal -> Production1 | Production2` });
       continue;
@@ -80,16 +80,63 @@ export function parseGrammar(input: string): { grammar: Grammar | null; errors: 
 }
 
 function parseSymbols(body: string): Symbol[] {
-  const tokens = body.trim().split(/\s+/);
-  return tokens.map(token => {
-    if (token === 'ε' || token === 'epsilon' || token === 'eps') {
-      return { type: 'epsilon' as const, value: 'ε' };
+  const trimmed = body.trim();
+  
+  // Check if already space-separated
+  if (trimmed.includes(' ')) {
+    const tokens = trimmed.split(/\s+/);
+    return tokens.map(tokenToSymbol);
+  }
+  
+  // Handle compact notation like "aS" "Sa" "(E)" by splitting on boundaries
+  // between uppercase (nonterminal start) and lowercase/special chars (terminals)
+  const parts = tokenizeCompact(trimmed);
+  return parts.map(tokenToSymbol);
+}
+
+function tokenToSymbol(token: string): Symbol {
+  if (token === 'ε' || token === 'epsilon' || token === 'eps') {
+    return { type: 'epsilon' as const, value: 'ε' };
+  }
+  if (/^[A-Z][A-Za-z0-9'_]*$/.test(token)) {
+    return { type: 'nonterminal' as const, value: token };
+  }
+  return { type: 'terminal' as const, value: token };
+}
+
+function tokenizeCompact(input: string): string[] {
+  const tokens: string[] = [];
+  let i = 0;
+  while (i < input.length) {
+    const ch = input[i];
+    if (/[A-Z]/.test(ch)) {
+      // Consume a nonterminal: uppercase letter followed by optional primes/digits/underscores
+      let nt = ch;
+      i++;
+      while (i < input.length && /[a-z0-9'_]/i.test(input[i]) && !/[A-Z]/.test(input[i])) {
+        // Only continue if it's a valid nonterminal suffix (lowercase, digit, prime, underscore)
+        // But stop if next char is uppercase (new nonterminal)
+        if (/[a-z]/.test(input[i])) {
+          // Check if this lowercase could be a terminal on its own
+          // Heuristic: if the nonterminal so far is just one uppercase letter,
+          // a following lowercase is likely a separate terminal
+          break;
+        }
+        nt += input[i];
+        i++;
+      }
+      tokens.push(nt);
+    } else if (ch === 'ε') {
+      tokens.push('ε');
+      i++;
+    } else {
+      // Terminal: consume one character (or known multi-char terminals like 'id')
+      // For compact notation, each lowercase letter or special char is its own terminal
+      tokens.push(ch);
+      i++;
     }
-    if (/^[A-Z][A-Za-z0-9'_]*$/.test(token)) {
-      return { type: 'nonterminal' as const, value: token };
-    }
-    return { type: 'terminal' as const, value: token };
-  });
+  }
+  return tokens;
 }
 
 export function grammarToString(grammar: Grammar): string {
