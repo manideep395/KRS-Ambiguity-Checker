@@ -11,7 +11,7 @@ import { transformGrammar } from '@/engine/transformer';
 import { computeFirstFollow, checkLL1Conflicts } from '@/engine/firstfollow';
 import { Grammar, AmbiguityResult, TransformationResult, ValidationError } from '@/engine/types';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Play, BarChart3, ArrowRightLeft, BookOpen, TreePine, Copy, Download } from 'lucide-react';
+import { Play, BarChart3, ArrowRightLeft, BookOpen, TreePine, Copy, Download, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 
 type TabId = 'analysis' | 'conversion' | 'explanation' | 'visualization';
@@ -127,28 +127,34 @@ const Index = () => {
       <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
         {/* Left Panel - Editor */}
         <div className="w-full lg:w-[45%] xl:w-[40%] flex flex-col border-r border-border min-h-0">
-          <div className="flex items-center justify-between px-4 py-2 bg-secondary/30 border-b border-border">
-            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Grammar Editor</span>
+          <div className="flex items-center justify-between px-4 py-2.5 glass-strong border-b border-border">
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Grammar Editor</span>
+            </div>
             <div className="flex items-center gap-2">
               <button
                 onClick={() => { navigator.clipboard.writeText(grammarText); toast.success('Copied'); }}
-                className="p-1.5 rounded text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+                className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary/80 transition-all duration-200"
                 title="Copy grammar"
               >
                 <Copy className="w-3.5 h-3.5" />
               </button>
-              <button
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.97 }}
                 onClick={handleAnalyze}
                 disabled={!grammarText.trim() || isAnalyzing}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-primary text-primary-foreground rounded-md text-xs font-medium hover:bg-primary/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                className="flex items-center gap-1.5 px-4 py-1.5 bg-primary text-primary-foreground rounded-lg text-xs font-semibold hover:bg-primary/90 transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed shadow-md hover:shadow-lg"
+                style={{ boxShadow: '0 4px 14px hsl(var(--primary) / 0.3)' }}
               >
                 {isAnalyzing ? (
                   <div className="w-3.5 h-3.5 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
                 ) : (
-                  <Play className="w-3.5 h-3.5" />
+                  <Sparkles className="w-3.5 h-3.5" />
                 )}
-                Analyze
-              </button>
+                {isAnalyzing ? 'Analyzing…' : 'Analyze'}
+              </motion.button>
             </div>
           </div>
           <div className="flex-1 min-h-0">
@@ -159,36 +165,86 @@ const Index = () => {
         {/* Right Panel - Results */}
         <div className="w-full lg:w-[55%] xl:w-[60%] flex flex-col min-h-0">
           {/* Tab bar */}
-          <div className="flex items-center justify-between px-2 bg-secondary/30 border-b border-border">
+          <div className="flex items-center justify-between px-2 glass-strong border-b border-border">
             <div className="flex">
               {tabs.map(tab => (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center gap-1.5 px-3 py-2.5 text-xs font-medium transition-colors border-b-2 ${
+                  className={`relative flex items-center gap-1.5 px-4 py-3 text-xs font-medium transition-all duration-200 ${
                     activeTab === tab.id
-                      ? 'border-primary text-primary'
-                      : 'border-transparent text-muted-foreground hover:text-foreground'
+                      ? 'text-primary'
+                      : 'text-muted-foreground hover:text-foreground'
                   }`}
                 >
                   {tab.icon}
                   <span className="hidden sm:inline">{tab.label}</span>
+                  {activeTab === tab.id && (
+                    <motion.div
+                      layoutId="activeTab"
+                      className="absolute bottom-0 left-2 right-2 h-0.5 bg-primary rounded-full"
+                      transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                    />
+                  )}
                 </button>
               ))}
             </div>
             {ambiguityResult && (
-              <button
+              <motion.button
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
                 onClick={handleExport}
-                className="flex items-center gap-1 px-2 py-1 text-xs text-muted-foreground hover:text-foreground hover:bg-secondary rounded transition-colors mr-2"
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground glass rounded-lg transition-all duration-200 mr-2 hover:shadow-md"
               >
                 <Download className="w-3.5 h-3.5" />
                 <span className="hidden sm:inline">Export</span>
-              </button>
+              </motion.button>
             )}
           </div>
 
+          {/* Analyzing overlay */}
+          <AnimatePresence>
+            {isAnalyzing && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="absolute inset-0 z-50 flex items-center justify-center glass"
+                style={{ backdropFilter: 'blur(8px)' }}
+              >
+                <motion.div
+                  initial={{ scale: 0.8, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 0.8, opacity: 0 }}
+                  className="flex flex-col items-center gap-4 p-8 rounded-2xl card-3d-deep glass-strong"
+                >
+                  <div className="relative">
+                    <div className="w-16 h-16 rounded-2xl bg-primary/15 flex items-center justify-center">
+                      <Sparkles className="w-8 h-8 text-primary animate-analyze-pulse" />
+                    </div>
+                    <div className="absolute -inset-2 rounded-3xl border-2 border-primary/20 animate-ping" style={{ animationDuration: '2s' }} />
+                  </div>
+                  <div className="text-center">
+                    <p className="text-sm font-semibold text-foreground">Analyzing Grammar</p>
+                    <p className="text-xs text-muted-foreground mt-1">Detecting ambiguity patterns…</p>
+                  </div>
+                  <div className="flex gap-1.5">
+                    {[0, 1, 2].map(i => (
+                      <motion.div
+                        key={i}
+                        className="w-2 h-2 rounded-full bg-primary"
+                        animate={{ y: [0, -8, 0] }}
+                        transition={{ duration: 0.6, repeat: Infinity, delay: i * 0.15 }}
+                      />
+                    ))}
+                  </div>
+                </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
           {/* Tab content */}
-          <div className="flex-1 min-h-0 overflow-hidden">
+          <div className="flex-1 min-h-0 overflow-hidden relative">
             <AnimatePresence mode="wait">
               {activeTab === 'analysis' && (
                 <AnalysisTab key="analysis" result={ambiguityResult} firstSets={firstSets} followSets={followSets} ll1Conflicts={ll1Conflicts} />
