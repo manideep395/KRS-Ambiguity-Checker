@@ -9,14 +9,14 @@ interface ParseTreeViewProps {
 }
 
 const ParseTreeView: React.FC<ParseTreeViewProps> = ({ grammar, convertedGrammar }) => {
-  const originalTree = useMemo(() => {
-    if (!grammar) return null;
-    return buildDisplayTree(grammar);
+  const originalTrees = useMemo(() => {
+    if (!grammar) return [];
+    return buildDisplayTrees(grammar);
   }, [grammar]);
 
-  const convertedTree = useMemo(() => {
-    if (!convertedGrammar) return null;
-    return buildDisplayTree(convertedGrammar);
+  const convertedTrees = useMemo(() => {
+    if (!convertedGrammar) return [];
+    return buildDisplayTrees(convertedGrammar);
   }, [convertedGrammar]);
 
   if (!grammar) {
@@ -34,12 +34,47 @@ const ParseTreeView: React.FC<ParseTreeViewProps> = ({ grammar, convertedGrammar
       animate={{ opacity: 1, y: 0 }}
       className="p-4 space-y-4 overflow-y-auto h-full"
     >
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <TreeCard title="Original Parse Tree" variant="original" tree={originalTree} />
-        {convertedTree && (
-          <TreeCard title="Converted Parse Tree" variant="converted" tree={convertedTree} />
-        )}
+      {/* Original Trees */}
+      <div>
+        <h3 className="text-xs font-semibold text-destructive mb-2">
+          Original Parse Tree{originalTrees.length > 1 ? 's' : ''} 
+          {originalTrees.length > 1 && (
+            <span className="ml-2 text-muted-foreground font-normal">
+              ({originalTrees.length} trees — grammar is ambiguous)
+            </span>
+          )}
+        </h3>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {originalTrees.map((tree, i) => (
+            <TreeCard
+              key={i}
+              title={originalTrees.length > 1 ? `Parse Tree ${i + 1}` : 'Parse Tree'}
+              variant="original"
+              tree={tree}
+              productionHint={originalTrees.length > 1 ? getTopProduction(tree) : undefined}
+            />
+          ))}
+        </div>
       </div>
+
+      {/* Converted Trees */}
+      {convertedTrees.length > 0 && (
+        <div>
+          <h3 className="text-xs font-semibold text-success mb-2">
+            Converted Parse Tree{convertedTrees.length > 1 ? 's' : ''}
+          </h3>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {convertedTrees.map((tree, i) => (
+              <TreeCard
+                key={i}
+                title={convertedTrees.length > 1 ? `Converted Tree ${i + 1}` : 'Converted Parse Tree'}
+                variant="converted"
+                tree={tree}
+              />
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Legend */}
       <div className="flex items-center justify-center gap-6 py-2">
@@ -60,7 +95,18 @@ const ParseTreeView: React.FC<ParseTreeViewProps> = ({ grammar, convertedGrammar
   );
 };
 
-const TreeCard: React.FC<{ title: string; variant: 'original' | 'converted'; tree: ParseTreeNode | null }> = ({ title, variant, tree }) => {
+function getTopProduction(tree: ParseTreeNode): string {
+  if (tree.children.length === 0) return '';
+  const childLabels = tree.children.map(c => c.label).join(' ');
+  return `${tree.label} → ${childLabels}`;
+}
+
+const TreeCard: React.FC<{ 
+  title: string; 
+  variant: 'original' | 'converted'; 
+  tree: ParseTreeNode | null;
+  productionHint?: string;
+}> = ({ title, variant, tree, productionHint }) => {
   const headerColor = variant === 'original' ? 'bg-destructive/8 border-destructive/20' : 'bg-success/8 border-success/20';
   const titleColor = variant === 'original' ? 'text-destructive' : 'text-success';
 
@@ -68,6 +114,9 @@ const TreeCard: React.FC<{ title: string; variant: 'original' | 'converted'; tre
     <div className="bg-card border border-border rounded-lg overflow-hidden">
       <div className={`px-3 py-2 border-b ${headerColor}`}>
         <span className={`text-xs font-semibold ${titleColor}`}>{title}</span>
+        {productionHint && (
+          <span className="text-xs text-muted-foreground ml-2 font-mono">({productionHint})</span>
+        )}
       </div>
       <div className="p-4 overflow-x-auto min-h-[200px] flex items-center justify-center">
         {tree ? (
@@ -80,39 +129,75 @@ const TreeCard: React.FC<{ title: string; variant: 'original' | 'converted'; tre
   );
 };
 
-function buildDisplayTree(grammar: Grammar, maxDepth: number = 4): ParseTreeNode | null {
+/**
+ * Build multiple parse trees by using different top-level productions.
+ * For ambiguous grammars, this shows how the same start symbol
+ * can derive different tree structures.
+ */
+function buildDisplayTrees(grammar: Grammar, maxDepth: number = 4): ParseTreeNode[] {
+  const startBodies = grammar.productions.get(grammar.startSymbol);
+  if (!startBodies || startBodies.length === 0) return [];
+
+  const trees: ParseTreeNode[] = [];
   let idCounter = 0;
 
-  function build(nt: string, depth: number): ParseTreeNode {
-    const node: ParseTreeNode = {
-      id: `n${idCounter++}`,
-      label: nt,
-      isTerminal: false,
-      children: []
-    };
-
-    if (depth >= maxDepth) return node;
-
-    const bodies = grammar.productions.get(nt);
-    if (!bodies || bodies.length === 0) return node;
-
-    // Pick first (shortest) production
-    const body = [...bodies].sort((a, b) => a.length - b.length)[0];
-
-    for (const sym of body) {
-      if (sym.type === 'epsilon') {
-        node.children.push({ id: `n${idCounter++}`, label: 'ε', isTerminal: true, children: [] });
-      } else if (sym.type === 'terminal') {
-        node.children.push({ id: `n${idCounter++}`, label: sym.value, isTerminal: true, children: [] });
-      } else {
-        node.children.push(build(sym.value, depth + 1));
-      }
-    }
-
-    return node;
+  for (const body of startBodies) {
+    const tree = buildOneTree(grammar, grammar.startSymbol, body, maxDepth, () => idCounter++);
+    trees.push(tree);
   }
 
-  return build(grammar.startSymbol, 0);
+  return trees;
+}
+
+function buildOneTree(
+  grammar: Grammar,
+  rootLabel: string,
+  body: import('@/engine/types').Symbol[],
+  maxDepth: number,
+  nextId: () => number
+): ParseTreeNode {
+  const root: ParseTreeNode = {
+    id: `n${nextId()}`,
+    label: rootLabel,
+    isTerminal: false,
+    children: []
+  };
+
+  root.children = body.map(sym => buildSubtree(grammar, sym, 1, maxDepth, nextId));
+  return root;
+}
+
+function buildSubtree(
+  grammar: Grammar,
+  sym: import('@/engine/types').Symbol,
+  depth: number,
+  maxDepth: number,
+  nextId: () => number
+): ParseTreeNode {
+  if (sym.type === 'epsilon') {
+    return { id: `n${nextId()}`, label: 'ε', isTerminal: true, children: [] };
+  }
+  if (sym.type === 'terminal') {
+    return { id: `n${nextId()}`, label: sym.value, isTerminal: true, children: [] };
+  }
+
+  const node: ParseTreeNode = {
+    id: `n${nextId()}`,
+    label: sym.value,
+    isTerminal: false,
+    children: []
+  };
+
+  if (depth >= maxDepth) return node;
+
+  const bodies = grammar.productions.get(sym.value);
+  if (bodies && bodies.length > 0) {
+    // Pick the shortest production to keep subtrees compact
+    const body = [...bodies].sort((a, b) => a.length - b.length)[0];
+    node.children = body.map(s => buildSubtree(grammar, s, depth + 1, maxDepth, nextId));
+  }
+
+  return node;
 }
 
 // SVG Tree renderer
@@ -204,7 +289,6 @@ const RenderNode: React.FC<{ layout: LayoutNode; parentX: number; parentY: numbe
   const isEpsilon = layout.node.label === 'ε';
   const isTerminal = layout.node.isTerminal;
 
-  // Use CSS variable-based colors for theme compatibility
   let fillColor: string;
   let strokeColor: string;
   let textColor: string;
@@ -225,7 +309,6 @@ const RenderNode: React.FC<{ layout: LayoutNode; parentX: number; parentY: numbe
 
   return (
     <g>
-      {/* Curved line from parent */}
       {!isRoot && (
         <path
           d={`M ${parentX} ${parentY + NODE_H / 2} C ${parentX} ${(parentY + NODE_H / 2 + y - NODE_H / 2) / 2 + 10}, ${x} ${(parentY + NODE_H / 2 + y - NODE_H / 2) / 2 + 10}, ${x} ${y - NODE_H / 2}`}
@@ -235,7 +318,6 @@ const RenderNode: React.FC<{ layout: LayoutNode; parentX: number; parentY: numbe
         />
       )}
 
-      {/* Node */}
       <rect
         x={x - NODE_W / 2}
         y={y - NODE_H / 2}
@@ -260,7 +342,6 @@ const RenderNode: React.FC<{ layout: LayoutNode; parentX: number; parentY: numbe
         {layout.node.label.length > 6 ? layout.node.label.slice(0, 5) + '…' : layout.node.label}
       </text>
 
-      {/* Children */}
       {layout.children.map((child, i) => (
         <RenderNode key={i} layout={child} parentX={x} parentY={y} />
       ))}
