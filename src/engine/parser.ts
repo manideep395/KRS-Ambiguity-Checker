@@ -12,7 +12,9 @@ export function parseGrammar(input: string): { grammar: Grammar | null; errors: 
     const line = lines[i].trim();
     if (!line || line.startsWith('//')) continue;
 
-    const arrowMatch = line.match(/^(\S+)\s*(?:->|→)\s*(.+)$/);
+    // Support both spaced and compact arrow notation: "S -> ..." or "S→..."
+    const arrowMatch = line.match(/^([A-Z][A-Za-z0-9'_]*)\s*(?:->|→)\s*(.+)$/) 
+      || line.match(/^(\S+?)\s*(?:->|→)\s*(.+)$/);
     if (!arrowMatch) {
       errors.push({ line: i + 1, column: 1, message: `Invalid production format. Expected: NonTerminal -> Production1 | Production2` });
       continue;
