@@ -149,16 +149,27 @@ const About: React.FC = () => {
             className="text-center space-y-4 pb-8"
           >
             <h2 className="text-2xl font-bold text-foreground">Built By</h2>
-            <div className="flex justify-center">
-              <div className="p-6 rounded-xl bg-card border border-border card-3d inline-flex items-center gap-4">
-                <div className="w-14 h-14 rounded-xl bg-primary/15 flex items-center justify-center border border-primary/20">
-                  <Users className="w-7 h-7 text-primary" />
-                </div>
-                <div className="text-left">
-                  <h3 className="text-lg font-semibold text-foreground">KRS Innovators</h3>
-                  <p className="text-sm text-muted-foreground">Building tools for compiler design education & research</p>
-                </div>
-              </div>
+            <p className="text-muted-foreground text-sm">KRS Innovators — Building tools for compiler design education & research</p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mt-4">
+              {[
+                { name: 'Kasireddy Manideep Reddy', role: 'Developer', icon: '💻' },
+                { name: 'Chinthimolla Sai Rohith', role: 'Designer', icon: '🎨' },
+                { name: 'Rayapudi Ranjith', role: 'Designer', icon: '🎨' },
+              ].map((member, i) => (
+                <motion.div
+                  key={member.name}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4, delay: 0.8 + i * 0.1 }}
+                  className="p-5 rounded-xl bg-card border border-border card-3d text-center space-y-2"
+                >
+                  <div className="w-14 h-14 rounded-full bg-primary/15 flex items-center justify-center mx-auto border border-primary/20 text-2xl">
+                    {member.icon}
+                  </div>
+                  <h3 className="text-base font-semibold text-foreground">{member.name}</h3>
+                  <p className="text-sm text-muted-foreground">{member.role}</p>
+                </motion.div>
+              ))}
             </div>
           </motion.section>
         </div>
