@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import NavBar from '@/components/NavBar';
+import Footer from '@/components/Footer';
 import GrammarEditor from '@/components/GrammarEditor';
 import AnalysisTab from '@/components/AnalysisTab';
 import ConversionTab from '@/components/ConversionTab';
@@ -262,6 +263,8 @@ const Index = () => {
           </div>
         </div>
       </div>
+
+      <Footer />
     </div>
   );
 };
