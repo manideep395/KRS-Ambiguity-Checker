@@ -18,10 +18,10 @@ import { toast } from 'sonner';
 type TabId = 'analysis' | 'conversion' | 'explanation' | 'visualization';
 
 const tabs: { id: TabId; label: string; icon: React.ReactNode }[] = [
-  { id: 'analysis', label: 'Analysis', icon: <BarChart3 className="w-3.5 h-3.5" /> },
-  { id: 'conversion', label: 'Conversion', icon: <ArrowRightLeft className="w-3.5 h-3.5" /> },
-  { id: 'explanation', label: 'Explanation', icon: <BookOpen className="w-3.5 h-3.5" /> },
-  { id: 'visualization', label: 'Visualization', icon: <TreePine className="w-3.5 h-3.5" /> },
+  { id: 'analysis', label: 'Analysis', icon: <BarChart3 className="w-4 h-4" /> },
+  { id: 'conversion', label: 'Conversion', icon: <ArrowRightLeft className="w-4 h-4" /> },
+  { id: 'explanation', label: 'Explanation', icon: <BookOpen className="w-4 h-4" /> },
+  { id: 'visualization', label: 'Visualization', icon: <TreePine className="w-4 h-4" /> },
 ];
 
 const Index = () => {
@@ -128,31 +128,31 @@ const Index = () => {
       <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
         {/* Left Panel - Editor */}
         <div className="w-full lg:w-[45%] xl:w-[40%] flex flex-col border-r border-border min-h-0">
-          <div className="flex items-center justify-between px-4 py-2.5 glass-strong border-b border-border">
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Grammar Editor</span>
+          <div className="flex items-center justify-between px-5 py-3 glass-strong border-b border-border">
+            <div className="flex items-center gap-2.5">
+              <div className="w-2.5 h-2.5 rounded-full bg-primary animate-pulse" />
+              <span className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Grammar Editor</span>
             </div>
             <div className="flex items-center gap-2">
               <button
                 onClick={() => { navigator.clipboard.writeText(grammarText); toast.success('Copied'); }}
-                className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary/80 transition-all duration-200"
+                className="p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary/80 transition-all duration-200"
                 title="Copy grammar"
               >
-                <Copy className="w-3.5 h-3.5" />
+                <Copy className="w-4 h-4" />
               </button>
               <motion.button
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.97 }}
                 onClick={handleAnalyze}
                 disabled={!grammarText.trim() || isAnalyzing}
-                className="flex items-center gap-1.5 px-4 py-1.5 bg-primary text-primary-foreground rounded-lg text-xs font-semibold hover:bg-primary/90 transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed shadow-md hover:shadow-lg"
+                className="flex items-center gap-2 px-5 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-semibold hover:bg-primary/90 transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed shadow-md hover:shadow-lg"
                 style={{ boxShadow: '0 4px 14px hsl(var(--primary) / 0.3)' }}
               >
                 {isAnalyzing ? (
-                  <div className="w-3.5 h-3.5 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
+                  <div className="w-4 h-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
                 ) : (
-                  <Sparkles className="w-3.5 h-3.5" />
+                  <Sparkles className="w-4 h-4" />
                 )}
                 {isAnalyzing ? 'Analyzing…' : 'Analyze'}
               </motion.button>
@@ -166,13 +166,13 @@ const Index = () => {
         {/* Right Panel - Results */}
         <div className="w-full lg:w-[55%] xl:w-[60%] flex flex-col min-h-0">
           {/* Tab bar */}
-          <div className="flex items-center justify-between px-2 glass-strong border-b border-border">
+          <div className="flex items-center justify-between px-3 glass-strong border-b border-border">
             <div className="flex">
               {tabs.map(tab => (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`relative flex items-center gap-1.5 px-4 py-3 text-xs font-medium transition-all duration-200 ${
+                  className={`relative flex items-center gap-2 px-5 py-3.5 text-sm font-medium transition-all duration-200 ${
                     activeTab === tab.id
                       ? 'text-primary'
                       : 'text-muted-foreground hover:text-foreground'
@@ -195,9 +195,9 @@ const Index = () => {
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 onClick={handleExport}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground glass rounded-lg transition-all duration-200 mr-2 hover:shadow-md"
+                className="flex items-center gap-2 px-4 py-2 text-sm text-muted-foreground hover:text-foreground glass rounded-lg transition-all duration-200 mr-2 hover:shadow-md"
               >
-                <Download className="w-3.5 h-3.5" />
+                <Download className="w-4 h-4" />
                 <span className="hidden sm:inline">Export</span>
               </motion.button>
             )}
@@ -226,8 +226,8 @@ const Index = () => {
                     <div className="absolute -inset-2 rounded-3xl border-2 border-primary/20 animate-ping" style={{ animationDuration: '2s' }} />
                   </div>
                   <div className="text-center">
-                    <p className="text-sm font-semibold text-foreground">Analyzing Grammar</p>
-                    <p className="text-xs text-muted-foreground mt-1">Detecting ambiguity patterns…</p>
+                    <p className="text-base font-semibold text-foreground">Analyzing Grammar</p>
+                    <p className="text-sm text-muted-foreground mt-1">Detecting ambiguity patterns…</p>
                   </div>
                   <div className="flex gap-1.5">
                     {[0, 1, 2].map(i => (
