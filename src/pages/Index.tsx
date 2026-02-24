@@ -28,7 +28,7 @@ const Index = () => {
   const [grammarText, setGrammarText] = useState('');
   const [errors, setErrors] = useState<ValidationError[]>([]);
   const [activeTab, setActiveTab] = useState<TabId>('analysis');
-  const [showAbout, setShowAbout] = useState(false);
+  
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [darkMode, setDarkMode] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -119,8 +119,6 @@ const Index = () => {
   return (
     <div className="flex flex-col h-screen bg-background overflow-hidden">
       <NavBar
-        showAbout={showAbout}
-        onToggleAbout={() => setShowAbout(!showAbout)}
         darkMode={darkMode}
         onToggleDarkMode={() => setDarkMode(!darkMode)}
       />
