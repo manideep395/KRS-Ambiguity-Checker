@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Moon, Sun, Shield, Info } from 'lucide-react';
+import { Moon, Sun, Info } from 'lucide-react';
+import krsLogo from '@/assets/krs-logo.png';
 import { useNavigate } from 'react-router-dom';
 
 interface NavBarProps {
@@ -25,8 +26,8 @@ const NavBar: React.FC<NavBarProps> = ({ darkMode, onToggleDarkMode }) => {
         transition={{ duration: 0.5, ease: 'easeOut' }}
         className="flex items-center gap-3"
       >
-        <div className="w-10 h-10 rounded-xl bg-primary/15 flex items-center justify-center border border-primary/25 shadow-md">
-          <Shield className="w-5 h-5 text-primary" />
+        <div className="w-10 h-10 rounded-xl bg-primary/15 flex items-center justify-center border border-primary/25 shadow-md overflow-hidden">
+          <img src={krsLogo} alt="KRS Logo" className="w-8 h-8 object-contain" />
         </div>
         <div className="text-center">
           <h1 className="text-lg font-bold tracking-tight text-foreground">
